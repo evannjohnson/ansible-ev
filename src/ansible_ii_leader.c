@@ -463,7 +463,7 @@ static void ii_init_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state)
 static void ii_tr_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state) {
 	uint8_t d[6] = { 0 };
 	uint8_t l = 0;
-	uint16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12];
+	int16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12] - 3277;
 	if (state) {
 		uint16_t vel = aux_to_vel(aux_param[0][track]);
 		switch (follower->active_mode) {
