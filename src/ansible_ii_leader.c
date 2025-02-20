@@ -463,7 +463,25 @@ static void ii_init_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state)
 static void ii_tr_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state) {
 	uint8_t d[6] = { 0 };
 	uint8_t l = 0;
-	int16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12] - 3277;
+	// int16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12] - 3277;
+	// int16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12] - 3277;
+	int16_t pitch;
+	int8_t note = outputs[track].semitones + (3 + follower->oct) * 12 - 36;
+	if (note < 0) {
+		// int t = -1 * note / 12
+		pitch = ET[note * -1] * -1;
+	} else {
+		pitch = ET[note];
+	}
+	// int16_t pitch = ET[outputs[track].semitones];
+	// int16_t pitch = WSYN_ET[outputs[track].semitones];
+	// int16_t pitch;
+	// if (follower -> oct < 0) {
+	// 	pitch = ET[follower->oct * -12 - outputs[track].semitones] * -1;
+	// } else {
+	// 	pitch = ET[outputs[track].semitones + follower->oct * 12] - 3277;
+	// }
+
 	if (state) {
 		uint16_t vel = aux_to_vel(aux_param[0][track]);
 		switch (follower->active_mode) {
@@ -660,7 +678,8 @@ i2c_follower_t followers[I2C_FOLLOWER_COUNT] = {
 			.mode = ii_mode_wsyn,
 			.tr = ii_tr_wsyn,
 			.mute = ii_mute_wsyn,
-			.cv = ii_cv_wsyn,
+			// .cv = ii_cv_wsyn,
+			.cv = ii_u16_nop,
 			.octave = ii_s8_nop,
 			.slew = ii_u16_nop,
 
