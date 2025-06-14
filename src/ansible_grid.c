@@ -2221,7 +2221,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mTr, x + 1);
+						kria_set_tmul(track, mTr, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2295,7 +2295,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mNote, x + 1);
+						kria_set_tmul(track, mNote, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2356,7 +2356,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mOct, x + 1);
+						kria_set_tmul(track, mOct, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2414,7 +2414,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mDur, x + 1);
+						kria_set_tmul(track, mDur, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2503,7 +2503,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if (z) {
-						kria_set_tmul(track, mRpt, x + 1);
+						kria_set_tmul(track, mRpt, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2556,7 +2556,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mAltNote, x + 1);
+						kria_set_tmul(track, mAltNote, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2610,7 +2610,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mGlide, x + 1);
+						kria_set_tmul(track, mGlide, (x + 1) * y);
 						monomeFrameDirty++;
 					}
 					break;
@@ -3114,7 +3114,7 @@ bool refresh_kria_mod(kria_view_t* view)
 		return false;
 	case modTime:
 		monomeLedBuffer[R7 + 11] = L1;
-		memset(monomeLedBuffer + R1, 3, 16);
+		memset(monomeLedBuffer + R1, 3, 16*6);
 		if (k_mode < KRIA_NUM_PARAMS) {
 			monomeLedBuffer[R1 + k.p[edit_pattern].t[track].tmul[k_mode] - 1] = L1;
 		}
