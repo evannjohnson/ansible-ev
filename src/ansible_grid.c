@@ -1600,7 +1600,7 @@ static void kria_set_tmul(uint8_t track, kria_modes_t mode, uint8_t x, uint8_t y
 	// x is high nibble, y is low
 	uint8_t packed_coord = pack_nibbles(x, y);
 	// multiply the value specified by x by this amount based on the row
-	uint8_t y_mults[6]= {1,2,3,4,6,8};
+	uint8_t y_mults[6]= {1,2,3,4,8,16};
 	uint8_t new_tmul = (x + 1) * y_mults[y];
 
 	switch (div_sync) {
@@ -2330,7 +2330,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mNote, x, y);
+						kria_set_tmul(track, mNote, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2391,7 +2391,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mOct, x, y);
+						kria_set_tmul(track, mOct, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2449,7 +2449,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mDur, x, y);
+						kria_set_tmul(track, mDur, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2538,7 +2538,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if (z) {
-						kria_set_tmul(track, mRpt, x, y);
+						kria_set_tmul(track, mRpt, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2591,7 +2591,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mAltNote, x, y);
+						kria_set_tmul(track, mAltNote, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2645,7 +2645,7 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case modTime:
 					if(z) {
-						kria_set_tmul(track, mGlide, x, y);
+						kria_set_tmul(track, mGlide, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
