@@ -117,3 +117,7 @@ void clock_set_tr(uint32_t n, uint8_t phase);
 void ii_ansible(uint8_t* d, uint8_t len);
 void load_flash_state(void);
 void flash_unfresh(void);
+
+uint8_t pack_nibbles(uint8_t high, uint8_t low);
+uint8_t get_high_nibble(uint8_t packed);
+uint8_t get_low_nibble(uint8_t packed);
