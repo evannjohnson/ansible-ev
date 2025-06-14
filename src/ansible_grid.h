@@ -55,6 +55,8 @@ typedef struct {
 	u8 llen[KRIA_NUM_PARAMS];
 	u8 lswap[KRIA_NUM_PARAMS];
 	u8 tmul[KRIA_NUM_PARAMS];
+	// the LED to light on the div mod page
+	u8 tmul_coord[KRIA_NUM_PARAMS];
 
 	bool tt_clocked;
 	bool trigger_clocked;

@@ -1658,6 +1658,69 @@ static void kria_set_tmul(uint8_t track, kria_modes_t mode, uint8_t new_tmul) {
 	}
 }
 
+static void kria_set_tmul_coord(uint8_t track, kria_modes_t mode, uint8_t x, uint8_t y) {
+	// x is high nibble, y is low
+	uint8_t packed_coord = pack_nibbles(x, y);
+	switch (div_sync) {
+	case 1:
+		if (note_div_sync) {
+			if (mode == mTr || mode == mNote) {
+				k.p[edit_pattern].t[track].tmul_coord[mTr] = packed_coord;
+				k.p[edit_pattern].t[track].tmul_coord[mNote] = packed_coord;
+			} else {
+				k.p[edit_pattern].t[track].tmul_coord[mRpt] = packed_coord;
+				k.p[edit_pattern].t[track].tmul_coord[mAltNote] = packed_coord;
+				k.p[edit_pattern].t[track].tmul_coord[mOct] = packed_coord;
+				k.p[edit_pattern].t[track].tmul_coord[mGlide] = packed_coord;
+				k.p[edit_pattern].t[track].tmul_coord[mDur] = packed_coord;
+			}
+		} else {
+			k.p[edit_pattern].t[track].tmul_coord[mTr] = packed_coord;
+			k.p[edit_pattern].t[track].tmul_coord[mNote] = packed_coord;
+			k.p[edit_pattern].t[track].tmul_coord[mRpt] = packed_coord;
+			k.p[edit_pattern].t[track].tmul_coord[mAltNote] = packed_coord;
+			k.p[edit_pattern].t[track].tmul_coord[mOct] = packed_coord;
+			k.p[edit_pattern].t[track].tmul_coord[mGlide] = packed_coord;
+			k.p[edit_pattern].t[track].tmul_coord[mDur] = packed_coord;
+		}
+		break;
+	case 2:
+		for (uint8_t i = 0; i < 4; i++) {
+			if (note_div_sync) {
+				if (mode == mTr || mode == mNote) {
+					k.p[edit_pattern].t[i].tmul_coord[mTr] = packed_coord;
+					k.p[edit_pattern].t[i].tmul_coord[mNote] = packed_coord;
+				} else {
+					k.p[edit_pattern].t[i].tmul_coord[mRpt] = packed_coord;
+					k.p[edit_pattern].t[i].tmul_coord[mAltNote] = packed_coord;
+					k.p[edit_pattern].t[i].tmul_coord[mOct] = packed_coord;
+					k.p[edit_pattern].t[i].tmul_coord[mGlide] = packed_coord;
+					k.p[edit_pattern].t[i].tmul_coord[mDur] = packed_coord;
+				}
+			} else {
+				k.p[edit_pattern].t[i].tmul_coord[mTr] = packed_coord;
+				k.p[edit_pattern].t[i].tmul_coord[mNote] = packed_coord;
+				k.p[edit_pattern].t[i].tmul_coord[mRpt] = packed_coord;
+				k.p[edit_pattern].t[i].tmul_coord[mAltNote] = packed_coord;
+				k.p[edit_pattern].t[i].tmul_coord[mOct] = packed_coord;
+				k.p[edit_pattern].t[i].tmul_coord[mGlide] = packed_coord;
+				k.p[edit_pattern].t[i].tmul_coord[mDur] = packed_coord;
+			}
+		}
+		break;
+	default:
+		k.p[edit_pattern].t[track].tmul_coord[mode] = packed_coord;
+		if (note_div_sync) {
+			if (mode == mTr) {
+				k.p[edit_pattern].t[track].tmul_coord[mNote] = packed_coord;
+			}
+			if (mode == mNote) {
+				k.p[edit_pattern].t[track].tmul_coord[mTr] = packed_coord;
+			}
+		}
+		break;
+	}
+}
 
 static void preset_mode_handle_key(u8 x, u8 y, u8 z, u8* glyph) {
 	if (z) {
@@ -2222,6 +2285,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if(z) {
 						kria_set_tmul(track, mTr, (x + 1) * y);
+						kria_set_tmul_coord(track, mTr, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2296,6 +2360,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if(z) {
 						kria_set_tmul(track, mNote, (x + 1) * y);
+						kria_set_tmul_coord(track, mNote, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2357,6 +2422,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if(z) {
 						kria_set_tmul(track, mOct, (x + 1) * y);
+						kria_set_tmul_coord(track, mOct, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2415,6 +2481,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if(z) {
 						kria_set_tmul(track, mDur, (x + 1) * y);
+						kria_set_tmul_coord(track, mDur, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2504,6 +2571,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if (z) {
 						kria_set_tmul(track, mRpt, (x + 1) * y);
+						kria_set_tmul_coord(track, mRpt, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2557,6 +2625,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if(z) {
 						kria_set_tmul(track, mAltNote, (x + 1) * y);
+						kria_set_tmul_coord(track, mAltNote, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -2611,6 +2680,7 @@ void handler_KriaGridKey(s32 data) {
 				case modTime:
 					if(z) {
 						kria_set_tmul(track, mGlide, (x + 1) * y);
+						kria_set_tmul_coord(track, mGlide, x, y - 1);
 						monomeFrameDirty++;
 					}
 					break;
@@ -3116,7 +3186,10 @@ bool refresh_kria_mod(kria_view_t* view)
 		monomeLedBuffer[R7 + 11] = L1;
 		memset(monomeLedBuffer + R1, 3, 16*6);
 		if (k_mode < KRIA_NUM_PARAMS) {
-			monomeLedBuffer[R1 + k.p[edit_pattern].t[track].tmul[k_mode] - 1] = L1;
+			u8 coord = k.p[edit_pattern].t[track].tmul_coord[k_mode];
+            u8 x = get_high_nibble(coord);
+            u8 y = get_low_nibble(coord);
+			monomeLedBuffer[R1 + x + (y * 16)] = L1;
 		}
 		else if (k_mode == mPattern) {
 			monomeLedBuffer[R1 + cue_div] = L1;
