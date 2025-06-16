@@ -1688,6 +1688,7 @@ static void kria_set_tmul(uint8_t track, kria_modes_t mode, uint8_t x, uint8_t y
 			}
 			if (mode == mNote) {
 				k.p[edit_pattern].t[track].tmul[mTr] = new_tmul;
+				k.p[edit_pattern].t[track].tmul_coord[mTr] = packed_coord;
 			}
 		}
 		break;
