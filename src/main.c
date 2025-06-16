@@ -699,6 +699,30 @@ void clock_set_tr(uint32_t n, uint8_t phase) {
 	timer_manual(&clockTimer);
 }
 
+uint8_t pack_nibbles(uint8_t high, uint8_t low);
+uint8_t get_high_nibble(uint8_t packed);
+uint8_t get_low_nibble(uint8_t packed);
+
+#include <stdio.h>
+#include <stdint.h>
+
+// Pack two 4-bit values into a uint8_t
+uint8_t pack_nibbles(uint8_t high, uint8_t low) {
+    // Ensure values are only 4 bits
+    high &= 0x0F;
+    low &= 0x0F;
+
+    return (high << 4) | low;
+}
+
+uint8_t get_high_nibble(uint8_t packed) {
+    return (packed >> 4) & 0x0F;
+}
+
+uint8_t get_low_nibble(uint8_t packed) {
+    return packed & 0x0F;
+}
+
 ///////
 // global ii handlers
 void load_flash_state(void) {
