@@ -639,7 +639,7 @@ void default_kria() {
 	memset(k.p[0].t[0].lend, 5, KRIA_NUM_PARAMS);
 	memset(k.p[0].t[0].llen, 6, KRIA_NUM_PARAMS);
 	memset(k.p[0].t[0].lswap, 0, KRIA_NUM_PARAMS);
-	memset(k.p[0].t[0].tmul, 1, KRIA_NUM_PARAMS);
+	memset(k.p[0].t[0].tmul, 0, KRIA_NUM_PARAMS);
 
 	k.p[0].t[1] = k.p[0].t[0];
 	k.p[0].t[2] = k.p[0].t[0];
@@ -765,8 +765,6 @@ void grid_keytimer_kria(uint8_t held_key) {
 }
 
 bool kria_next_step(uint8_t t, uint8_t p) {
-	pos_mul[t][p]++;
-
 	bool latch_input = false;
 	if (kria_sync_mode == krSyncNone) {
 		latch_input = true;
@@ -882,6 +880,7 @@ bool kria_next_step(uint8_t t, uint8_t p) {
 		}
 	}
 	else
+		pos_mul[t][p]++;
 		return false;
 }
 
@@ -1601,7 +1600,8 @@ static void kria_set_tmul(uint8_t track, kria_modes_t mode, uint8_t x, uint8_t y
 	uint8_t packed_coord = pack_nibbles(x, y);
 	// multiply the value specified by x by this amount based on the row
 	uint8_t y_mults[6]= {1,2,3,4,8,16};
-	uint8_t new_tmul = (x + 1) * y_mults[y];
+	// map 1-256 to 0-255
+	uint8_t new_tmul = (x + 1) * y_mults[y] - 1;
 
 	switch (div_sync) {
 	case 1:
