@@ -60,6 +60,7 @@ typedef struct {
 
 	bool tt_clocked;
 	bool trigger_clocked;
+	bool stream_notes;
 } kria_track;
 
 typedef struct {

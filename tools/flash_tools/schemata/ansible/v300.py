@@ -94,6 +94,7 @@ typedef struct {
 
 	bool tt_clocked;
 	bool trigger_clocked;
+	bool stream_notes;
 } kria_track;
 
 typedef struct {
@@ -466,6 +467,7 @@ typedef const struct {
                                                 self.scalar_settings(track, [
                                                     'tt_clocked',
                                                     'trigger_clocked'
+                                                    'stream_notes'
                                                 ]),
                                             ),
                                         ),
