@@ -634,6 +634,7 @@ void default_kria() {
 	k.p[0].t[0].direction = krDirForward;
 	k.p[0].t[0].tt_clocked = false;
 	k.p[0].t[0].trigger_clocked = false;
+	k.p[0].t[0].stream_notes = false;
 	memset(k.p[0].t[0].advancing, 1, KRIA_NUM_PARAMS);
 	memset(k.p[0].t[0].lstart, 0, KRIA_NUM_PARAMS);
 	memset(k.p[0].t[0].lend, 5, KRIA_NUM_PARAMS);
@@ -1039,6 +1040,8 @@ void clock_kria_track( uint8_t trackNum ) {
 				kria_blinks[trackNum] = 1;
 			}
 		}
+	} else if (k.p[k.pattern].t[trackNum].stream_notes) {
+		kria_set_note(trackNum);
 	}
 }
 
@@ -2668,6 +2671,9 @@ void handler_KriaGridKey(s32 data) {
 						if (x == 1) {
 							k.p[edit_pattern].t[y].trigger_clocked = !k.p[edit_pattern].t[y].trigger_clocked;
 						}
+						if (x == 2) {
+							k.p[edit_pattern].t[y].stream_notes = !k.p[edit_pattern].t[y].stream_notes;
+						}
 						if (x >= 3 && x <= 7) {
 							k.p[edit_pattern].t[y].direction = x - 3;
 						}
@@ -3422,6 +3428,7 @@ void refresh_kria_scale(kria_view_t* view)
 		// highlight TT clock enables and trigger steps
 		monomeLedBuffer[0+16*y] = k.p[edit_pattern].t[y].tt_clocked ? L1 : L0;
 		monomeLedBuffer[1+16*y] = k.p[edit_pattern].t[y].trigger_clocked ? L1 : L0;
+		monomeLedBuffer[2+16*y] = k.p[edit_pattern].t[y].stream_notes ? L1 : L0;
 
 		// show selected direction
 		for ( uint8_t x=3; x<=7; x++ ) {

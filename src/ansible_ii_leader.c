@@ -465,14 +465,6 @@ static void ii_tr_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state) {
 	uint8_t l = 0;
 	// int16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12] - 3277;
 	// int16_t pitch = ET[outputs[track].semitones + (3 + follower->oct) * 12] - 3277;
-	int16_t pitch;
-	int8_t note = outputs[track].semitones + (3 + follower->oct) * 12 - 36;
-	if (note < 0) {
-		// int t = -1 * note / 12
-		pitch = ET[note * -1] * -1;
-	} else {
-		pitch = ET[note];
-	}
 	// int16_t pitch = ET[outputs[track].semitones];
 	// int16_t pitch = WSYN_ET[outputs[track].semitones];
 	// int16_t pitch;
@@ -482,56 +474,57 @@ static void ii_tr_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state) {
 	// 	pitch = ET[outputs[track].semitones + follower->oct * 12] - 3277;
 	// }
 
-	if (state) {
-		uint16_t vel = aux_to_vel(aux_param[0][track]);
-		switch (follower->active_mode) {
-			case 0: { // polyphonically allocated
+	switch (follower->active_mode) {
+		case 0: { // polyphonically allocated
+			int16_t pitch;
+			int8_t note = outputs[track].semitones + (3 + follower->oct) * 12 - 36;
+			if (note < 0) {
+				// int t = -1 * note / 12
+				pitch = ET[note * -1] * -1;
+			} else {
+				pitch = ET[note];
+			}
+
+			if (state) {
+				uint16_t vel = aux_to_vel(aux_param[0][track]);
 				d[0] = WS_S_NOTE;
 				d[1] = pitch >> 8;
 				d[2] = pitch & 0xFF;
 				d[3] = vel >> 8;
 				d[4] = vel & 0xFF;
 				l = 5;
-				break;
-			}
-			case 1: { // tracks to first 4 voices
-				d[0] = WS_S_VOX;
-				d[1] = track + 1;
-				d[2] = pitch >> 8;
-				d[3] = pitch & 0xFF;
-				d[4] = vel >> 8;
-				d[5] = vel & 0xFF;
-				l = 6;
-				break;
-			}
-			default: {
-				return;
-			}
-		}
-	}
-	else {
-		switch (follower->active_mode) {
-			case 0: {
+			} else {
 				d[0] = WS_S_NOTE;
 				d[1] = pitch >> 8;
 				d[2] = pitch & 0xFF;
 				d[3] = 0;
 				d[4] = 0;
 				l = 5;
-				break;
 			}
-			case 1: {
-				d[0] = WS_S_VOX;
+			break;
+		}
+		case 1: { // voice per track
+			if (state) {
+				uint16_t vel = aux_to_vel(aux_param[0][track]);
+				d[0] = WS_S_VEL;
 				d[1] = track + 1;
-				d[2] = pitch >> 8;
-				d[3] = pitch & 0xFF;
-				d[4] = 0;
-				d[5] = 0;
-				l = 6;
-				break;
+				d[2] = vel >> 8;
+				d[3] = vel & 0xFF;
+				l = 4;
+			} else {
+				d[0] = WS_S_VEL;
+				d[1] = track + 1;
+				d[2] = 0;
+				d[3] = 0;
+				l = 4;
 			}
+			break;
+		}
+		default: {
+			return;
 		}
 	}
+
 	if (l > 0) {
 		i2c_leader_tx(follower->addr, d, l);
 	}
@@ -554,12 +547,40 @@ static void ii_mute_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t mode) 
 }
 
 static void ii_cv_wsyn(i2c_follower_t* follower, uint8_t track, uint16_t dac_value) {
-	uint8_t d[4] = { 0 };
-	d[0] = WS_S_PITCH;
-	d[1] = track;
-	d[2] = dac_value >> 8;
-	d[3] = dac_value & 0xFF;
-	i2c_leader_tx(follower->addr, d, 4);
+	switch (follower->active_mode) {
+		case 0: { // polyphonically allocated
+			// don't think it makes sense to change pitch without a note being triggered in polyphonic mode
+			// pitch is set in this mode in ii_tr_wsyn
+			return;
+		}
+		case 1: { // voice per track
+			uint8_t d[4] = { 0 };
+			// d[0] = WS_S_PITCH;
+			// d[1] = track;
+			// d[2] = dac_value >> 8;
+			// d[3] = dac_value & 0xFF;
+
+			// insted of setting pitch to dac value, set it to a note
+			// this means slew won't work
+			int16_t pitch;
+			int8_t note = outputs[track].semitones + (3 + follower->oct) * 12 - 36;
+			if (note < 0) {
+				// int t = -1 * note / 12
+				pitch = ET[note * -1] * -1;
+			} else {
+				pitch = ET[note];
+			}
+
+			d[0] = WS_S_PITCH;
+			d[1] = track + 1;
+			d[2] = pitch >> 8;
+			d[3] = pitch & 0xFF;
+			i2c_leader_tx(follower->addr, d, 4);
+		}
+		default: {
+			return;
+		}
+	}
 }
 
 static void ii_mode_crow(i2c_follower_t* follower, uint8_t track, uint8_t mode) {
@@ -676,8 +697,7 @@ i2c_follower_t followers[I2C_FOLLOWER_COUNT] = {
 			.mode = ii_mode_wsyn,
 			.tr = ii_tr_wsyn,
 			.mute = ii_mute_wsyn,
-			// .cv = ii_cv_wsyn,
-			.cv = ii_u16_nop,
+			.cv = ii_cv_wsyn,
 			.octave = ii_s8_nop,
 			.slew = ii_u16_nop,
 
