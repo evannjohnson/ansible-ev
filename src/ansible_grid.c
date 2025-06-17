@@ -2164,6 +2164,25 @@ void handler_KriaGridKey(s32 data) {
 					break;
 				case 8:
 					view->mode = mDur; break;
+				case 9:
+					view->mod_hold = !(view->mod_hold);
+					if (!(view->mod_hold)) {
+						// only set mod to none if no mod key held
+						bool set_mod_none = true;
+
+						for (int i = 0; i < key_count; i++) {
+							if (index + 1 <= held_keys[i] &&
+								held_keys[i] <= index + 3) {
+								set_mod_none = false;
+								break;
+							}
+						}
+
+						if (set_mod_none) {
+							view->mod_mode = modNone;
+						}
+					}
+					break;
 				case 10:
 					view->mod_mode = modLoop;
 					loop_count = 0;
@@ -2190,7 +2209,9 @@ void handler_KriaGridKey(s32 data) {
 				case 10:
 				case 11:
 				case 12:
-					view->mod_mode = modNone;
+					if (!(view->mod_hold)) {
+						view->mod_mode = modNone;
+					}
 					break;
 				case 15:
 					cue = false;
@@ -3062,6 +3083,9 @@ void refresh_kria_view(kria_view_t* view)
 
 	// bottom strip
 	memset(monomeLedBuffer + R7 + 5, L0, 4);
+	if (view->mod_hold) {
+		monomeLedBuffer[R7 + 9] = 2;
+	}
 	monomeLedBuffer[R7 + 10] = L0;
 	monomeLedBuffer[R7 + 11] = L0;
 	if (k_mode < KRIA_NUM_PARAMS) {

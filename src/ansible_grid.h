@@ -116,6 +116,7 @@ typedef struct {
 	kria_modes_t mode;
 	kria_mod_modes_t mod_mode;
 	bool mode_is_alt;
+	bool mod_hold; // don't leave mod page on release
 	u8* buffer;
 } kria_view_t;
 
