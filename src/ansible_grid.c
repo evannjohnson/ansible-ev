@@ -2184,14 +2184,27 @@ void handler_KriaGridKey(s32 data) {
 					}
 					break;
 				case 10:
-					view->mod_mode = modLoop;
-					loop_count = 0;
+					if (view->mod_hold && (view->mod_mode == modLoop)){
+						view->mod_hold = false;
+					} else {
+						view->mod_mode = modLoop;
+						loop_count = 0;
+					}
 					break;
 				case 11:
-					view->mod_mode = modTime; break;
+					if (view->mod_hold && (view->mod_mode == modTime)){
+						view->mod_hold = false;
+					} else {
+						view->mod_mode = modTime;
+					}
+					break;
 				case 12:
 					if (view->mode < KRIA_NUM_PARAMS) {
-						view->mod_mode = modProb;
+						if (view->mod_hold && (view->mod_mode == modProb)){
+							view->mod_hold = false;
+						} else {
+							view->mod_mode = modProb;
+						}
 					}
 					break;
 				case 14:
