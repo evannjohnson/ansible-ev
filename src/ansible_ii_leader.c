@@ -218,6 +218,26 @@ static void ii_mode_txo(i2c_follower_t* follower, uint8_t track, uint8_t mode) {
 			i2c_leader_tx(follower->addr, d, 4);
 			break;
 		}
+		case 2: { // non-enveloped oscillators
+			d[0] = 0x60; // TO_ENV_ACT
+			d[1] = track;
+			d[2] = 0;
+			d[3] = 0;
+			i2c_leader_tx(follower->addr, d, 4);
+
+			d[0] = 0x15; // TO_CV_OFF
+			d[1] = track;
+			d[2] = 0;
+			d[3] = 0;
+			i2c_leader_tx(follower->addr, d, 4);
+
+			d[0] = 0x10; // TO_CV
+			d[1] = track;
+			d[2] = 8192 >> 8;
+			d[3] = 8192 & 0xFF;
+			i2c_leader_tx(follower->addr, d, 4);
+			break;
+		}
 		default: return;
 	}
 }
@@ -250,6 +270,9 @@ static void ii_octave_txo(i2c_follower_t* follower, uint8_t track, int8_t octave
 			}
 			break;
 		}
+		case 2: { // non-enveloped oscillator, pitch is calculated from oct
+			break;
+		}
 		default: return;
 	}
 }
@@ -273,6 +296,9 @@ static void ii_tr_txo(i2c_follower_t* follower, uint8_t track, uint8_t state) {
 			d[3] = state;
 			i2c_leader_tx(follower->addr, d, 4);
 			break;
+		}
+		case 2: { // non-enveloped oscillator, use gate from ansible gate output
+			return;
 		}
 		default: return;
 	}
@@ -305,6 +331,15 @@ static void ii_cv_txo(i2c_follower_t* follower, uint8_t track, uint16_t dac_valu
 			i2c_leader_tx(follower->addr, d, 4);
 			break;
 		}
+		case 2: { // non-enveloped oscillator
+			dac_value = (int)dac_value + (int)ET[12*(4+follower->oct)];
+			d[0] = 0x40; // TO_OSC
+			d[1] = track;
+			d[2] = dac_value >> 8;
+			d[3] = dac_value & 0xFF;
+			i2c_leader_tx(follower->addr, d, 4);
+			break;
+		}
 		default: return;
 	}
 }
@@ -323,6 +358,14 @@ static void ii_slew_txo(i2c_follower_t* follower, uint8_t track, uint16_t slew) 
 		}
 		case 1: { // gate/cv
 			d[0] = 0x12;  // TO_CV_SLEW
+			d[1] = track;
+			d[2] = slew >> 8;
+			d[3] = slew & 0xFF;
+			i2c_leader_tx(follower->addr, d, 4);
+			break;
+		}
+		case 2: { // non-enveloped oscillator
+			d[0] = 0x4F;  // TO_OSC_SLEW
 			d[1] = track;
 			d[2] = slew >> 8;
 			d[3] = slew & 0xFF;
@@ -646,7 +689,7 @@ i2c_follower_t followers[I2C_FOLLOWER_COUNT] = {
 			.cv = ii_cv_txo,
 			.octave = ii_octave_txo,
 			.slew = ii_slew_txo,
-			.mode_ct = 2,
+			.mode_ct = 3,
 		},
 	},
 	{
