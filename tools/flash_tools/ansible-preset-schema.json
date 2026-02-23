@@ -1,0 +1,525 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:ansible-preset-schema",
+  "title": "Ansible Preset",
+  "description": "JSON schema for Ansible module preset backup files (ansible-preset.json)",
+  "type": "object",
+  "required": ["meta", "shared", "apps"],
+  "additionalProperties": false,
+  "properties": {
+
+    "meta": {
+      "type": "object",
+      "required": ["version", "grid_varibrightness", "i2c_addr", "followers", "connected", "arc_mode", "grid_mode", "midi_mode", "none_mode"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Firmware git version string"
+        },
+        "grid_varibrightness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "i2c_addr": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "followers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["active", "track_en", "oct", "active_mode"],
+            "additionalProperties": false,
+            "properties": {
+              "active": { "type": "boolean" },
+              "track_en": { "type": "integer", "minimum": 0, "maximum": 255 },
+              "oct": { "type": "integer", "minimum": 0, "maximum": 255 },
+              "active_mode": { "type": "integer", "minimum": 0, "maximum": 255 }
+            }
+          }
+        },
+        "connected": {
+          "type": "string",
+          "enum": ["conNONE", "conARC", "conGRID", "conMIDI", "conFLASH"]
+        },
+        "arc_mode": {
+          "$ref": "#/$defs/ansible_mode"
+        },
+        "grid_mode": {
+          "$ref": "#/$defs/ansible_mode"
+        },
+        "midi_mode": {
+          "$ref": "#/$defs/ansible_mode"
+        },
+        "none_mode": {
+          "$ref": "#/$defs/ansible_mode"
+        }
+      }
+    },
+
+    "shared": {
+      "type": "object",
+      "required": ["scales", "tuning_table"],
+      "additionalProperties": false,
+      "properties": {
+        "scales": {
+          "type": "array",
+          "description": "16 scales, each 8 bytes hex-encoded",
+          "minItems": 16,
+          "maxItems": 16,
+          "items": { "type": "string", "pattern": "^[0-9a-fA-F]{16}$" }
+        },
+        "tuning_table": {
+          "type": "array",
+          "description": "4 tuning tables, each 120 uint16 values (240 bytes) hex-encoded",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "type": "string", "pattern": "^[0-9a-fA-F]{480}$" }
+        }
+      }
+    },
+
+    "apps": {
+      "type": "object",
+      "required": ["kria", "mp", "es", "levels", "cycles", "midi_standard", "midi_arp", "tt"],
+      "additionalProperties": false,
+      "properties": {
+
+        "kria": {
+          "type": "object",
+          "required": ["clock_period", "curr_preset", "sync_mode", "note_sync", "loop_sync", "note_div_sync", "div_sync", "cue_div", "cue_steps", "meta", "meta_reset_all", "dur_tie_mode", "presets"],
+          "additionalProperties": false,
+          "properties": {
+            "clock_period": { "type": "integer", "minimum": 0 },
+            "curr_preset": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "sync_mode": { "type": "integer", "minimum": 0 },
+            "note_sync": { "type": "boolean" },
+            "loop_sync": { "type": "integer", "minimum": 0 },
+            "note_div_sync": { "type": "boolean" },
+            "div_sync": { "type": "integer", "minimum": 0 },
+            "cue_div": { "type": "integer", "minimum": 0 },
+            "cue_steps": { "type": "integer", "minimum": 0 },
+            "meta": { "type": "integer", "minimum": 0 },
+            "meta_reset_all": { "type": "boolean" },
+            "dur_tie_mode": { "type": "boolean" },
+            "presets": {
+              "type": "array",
+              "description": "8 Kria presets (kria_data_t[8])",
+              "minItems": 8,
+              "maxItems": 8,
+              "items": { "$ref": "#/$defs/kria_data" }
+            }
+          }
+        },
+
+        "mp": {
+          "type": "object",
+          "required": ["curr_preset", "sound", "voice_mode", "presets"],
+          "additionalProperties": false,
+          "properties": {
+            "curr_preset": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "sound": { "type": "integer", "minimum": 0 },
+            "voice_mode": { "type": "integer", "minimum": 0 },
+            "presets": {
+              "type": "array",
+              "description": "8 MP presets (mp_data_t[8])",
+              "minItems": 8,
+              "maxItems": 8,
+              "items": { "$ref": "#/$defs/mp_data" }
+            }
+          }
+        },
+
+        "es": {
+          "type": "object",
+          "required": ["curr_preset", "presets"],
+          "additionalProperties": false,
+          "properties": {
+            "curr_preset": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "presets": {
+              "type": "array",
+              "description": "8 Earthsea presets (es_data_t[8])",
+              "minItems": 8,
+              "maxItems": 8,
+              "items": { "$ref": "#/$defs/es_data" }
+            }
+          }
+        },
+
+        "levels": {
+          "type": "object",
+          "required": ["curr_preset", "presets"],
+          "additionalProperties": false,
+          "properties": {
+            "curr_preset": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "presets": {
+              "type": "array",
+              "description": "8 Levels presets (levels_data_t[8])",
+              "minItems": 8,
+              "maxItems": 8,
+              "items": { "$ref": "#/$defs/levels_data" }
+            }
+          }
+        },
+
+        "cycles": {
+          "type": "object",
+          "required": ["curr_preset", "presets"],
+          "additionalProperties": false,
+          "properties": {
+            "curr_preset": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "presets": {
+              "type": "array",
+              "description": "8 Cycles presets (cycles_data_t[8])",
+              "minItems": 8,
+              "maxItems": 8,
+              "items": { "$ref": "#/$defs/cycles_data" }
+            }
+          }
+        },
+
+        "midi_standard": {
+          "type": "object",
+          "required": ["clock_period", "voicing", "fixed", "shift", "slew"],
+          "additionalProperties": false,
+          "properties": {
+            "clock_period": { "type": "integer", "minimum": 0 },
+            "voicing": { "type": "integer", "minimum": 0 },
+            "fixed": {
+              "type": "object",
+              "required": ["notes", "cc"],
+              "additionalProperties": false,
+              "properties": {
+                "notes": {
+                  "type": "string",
+                  "description": "4 MIDI note numbers hex-encoded (4 bytes)",
+                  "pattern": "^[0-9a-fA-F]{8}$"
+                },
+                "cc": {
+                  "type": "string",
+                  "description": "4 MIDI CC numbers hex-encoded (4 bytes)",
+                  "pattern": "^[0-9a-fA-F]{8}$"
+                }
+              }
+            },
+            "shift": { "type": "integer" },
+            "slew": { "type": "integer" }
+          }
+        },
+
+        "midi_arp": {
+          "type": "object",
+          "required": ["clock_period", "style", "hold", "players"],
+          "additionalProperties": false,
+          "properties": {
+            "clock_period": { "type": "integer", "minimum": 0 },
+            "style": { "type": "integer", "minimum": 0 },
+            "hold": { "type": "boolean" },
+            "players": {
+              "type": "array",
+              "description": "4 arp players (midi_arp_player_state_t[4])",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "required": ["fill", "division", "rotation", "gate", "steps", "offset", "slew", "shift"],
+                "additionalProperties": false,
+                "properties": {
+                  "fill": { "type": "integer", "minimum": 0 },
+                  "division": { "type": "integer", "minimum": 0 },
+                  "rotation": { "type": "integer" },
+                  "gate": { "type": "integer", "minimum": 0 },
+                  "steps": { "type": "integer", "minimum": 0 },
+                  "offset": { "type": "integer", "minimum": 0 },
+                  "slew": { "type": "integer" },
+                  "shift": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+
+        "tt": {
+          "type": "object",
+          "required": ["clock_period", "tr_time", "cv_slew"],
+          "additionalProperties": false,
+          "properties": {
+            "clock_period": { "type": "integer", "minimum": 0 },
+            "tr_time": {
+              "type": "string",
+              "description": "4 trigger times (uint16[4] = 8 bytes) hex-encoded",
+              "pattern": "^[0-9a-fA-F]{16}$"
+            },
+            "cv_slew": {
+              "type": "string",
+              "description": "4 CV slew values (uint16[4] = 8 bytes) hex-encoded",
+              "pattern": "^[0-9a-fA-F]{16}$"
+            }
+          }
+        }
+
+      }
+    }
+  },
+
+  "$defs": {
+
+    "ansible_mode": {
+      "type": "string",
+      "enum": ["mArcLevels", "mArcCycles", "mGridKria", "mGridMP", "mGridES", "mMidiStandard", "mMidiArp", "mTT"]
+    },
+
+    "hex8": {
+      "type": "string",
+      "description": "8 hex chars = 4 bytes",
+      "pattern": "^[0-9a-fA-F]{8}$"
+    },
+
+    "hex16": {
+      "type": "string",
+      "description": "16 hex chars = 8 bytes",
+      "pattern": "^[0-9a-fA-F]{16}$"
+    },
+
+    "hex14": {
+      "type": "string",
+      "description": "14 hex chars = 7 bytes (7 params)",
+      "pattern": "^[0-9a-fA-F]{14}$"
+    },
+
+    "hex32": {
+      "type": "string",
+      "description": "32 hex chars = 16 bytes (16 steps)",
+      "pattern": "^[0-9a-fA-F]{32}$"
+    },
+
+    "kria_track": {
+      "type": "object",
+      "required": ["tr", "oct", "note", "dur", "rpt", "rptBits", "alt_note", "glide", "p", "dur_mul", "direction", "advancing", "octshift", "lstart", "lend", "llen", "lswap", "tmul", "tt_clocked", "trigger_clocked"],
+      "properties": {
+        "tr":       { "$ref": "#/$defs/hex32", "description": "Trigger map (uint8[16])" },
+        "oct":      { "$ref": "#/$defs/hex32", "description": "Octave per step (int8[16])" },
+        "note":     { "$ref": "#/$defs/hex32", "description": "Note per step (uint8[16])" },
+        "dur":      { "$ref": "#/$defs/hex32", "description": "Duration per step (uint8[16])" },
+        "rpt":      { "$ref": "#/$defs/hex32", "description": "Repeats per step (uint8[16])" },
+        "rptBits":  { "$ref": "#/$defs/hex32", "description": "Repeat bits per step (uint8[16])" },
+        "alt_note": { "$ref": "#/$defs/hex32", "description": "Alternate note per step (uint8[16])" },
+        "glide":    { "$ref": "#/$defs/hex32", "description": "Glide per step (uint8[16])" },
+        "p": {
+          "type": "array",
+          "description": "7 parameter lanes, each 16 steps (uint8[7][16])",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": { "$ref": "#/$defs/hex32" }
+        },
+        "dur_mul":         { "type": "integer", "minimum": 0 },
+        "direction":       { "type": "integer", "minimum": 0 },
+        "advancing":       { "$ref": "#/$defs/hex14", "description": "Advancing flag per param (uint8[7])" },
+        "octshift":        { "type": "integer" },
+        "lstart":          { "$ref": "#/$defs/hex14", "description": "Loop start per param (uint8[7])" },
+        "lend":            { "$ref": "#/$defs/hex14", "description": "Loop end per param (uint8[7])" },
+        "llen":            { "$ref": "#/$defs/hex14", "description": "Loop length per param (uint8[7])" },
+        "lswap":           { "$ref": "#/$defs/hex14", "description": "Loop swap per param (uint8[7])" },
+        "tmul":            { "$ref": "#/$defs/hex14", "description": "Time multiplier per param (uint8[7])" },
+        "tmul_coord":      { "$ref": "#/$defs/hex14", "description": "Clock div page LED coordinate per param, packed nibbles (uint8[7])" },
+        "tt_clocked":      { "type": "boolean" },
+        "trigger_clocked": { "type": "boolean" },
+        "stream_notes":    { "type": "boolean" }
+      }
+    },
+
+    "kria_pattern": {
+      "type": "object",
+      "required": ["tracks", "scale"],
+      "additionalProperties": false,
+      "properties": {
+        "tracks": {
+          "type": "array",
+          "description": "4 tracks (kria_track[4])",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/kria_track" }
+        },
+        "scale": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "kria_data": {
+      "type": "object",
+      "required": ["patterns", "curr_pattern", "meta_pat", "meta_steps", "meta_start", "meta_end", "meta_len", "meta_lswap", "glyph"],
+      "additionalProperties": false,
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "description": "16 patterns (kria_pattern[16])",
+          "minItems": 16,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/kria_pattern" }
+        },
+        "curr_pattern": { "type": "integer", "minimum": 0, "maximum": 15 },
+        "meta_pat": {
+          "type": "string",
+          "description": "Meta pattern sequence (uint8[64])",
+          "pattern": "^[0-9a-fA-F]{128}$"
+        },
+        "meta_steps": {
+          "type": "string",
+          "description": "Meta step lengths (uint8[64])",
+          "pattern": "^[0-9a-fA-F]{128}$"
+        },
+        "meta_start":  { "type": "integer", "minimum": 0 },
+        "meta_end":    { "type": "integer", "minimum": 0 },
+        "meta_len":    { "type": "integer", "minimum": 0 },
+        "meta_lswap":  { "type": "integer", "minimum": 0 },
+        "glyph": {
+          "$ref": "#/$defs/hex16",
+          "description": "Display glyph (uint8[8])"
+        }
+      }
+    },
+
+    "mp_data": {
+      "type": "object",
+      "required": ["count", "speed", "min", "max", "trigger", "toggle", "rules", "rule_dests", "sync", "rule_dest_targets", "smin", "smax", "scale", "glyph"],
+      "additionalProperties": false,
+      "properties": {
+        "count":             { "$ref": "#/$defs/hex16", "description": "Cycle lengths (uint8[8])" },
+        "speed":             { "$ref": "#/$defs/hex16", "description": "Speeds (int8[8])" },
+        "min":               { "$ref": "#/$defs/hex16", "description": "Min values (uint8[8])" },
+        "max":               { "$ref": "#/$defs/hex16", "description": "Max values (uint8[8])" },
+        "trigger":           { "$ref": "#/$defs/hex16", "description": "Trigger state (uint8[8])" },
+        "toggle":            { "$ref": "#/$defs/hex16", "description": "Toggle state (uint8[8])" },
+        "rules":             { "$ref": "#/$defs/hex16", "description": "Rules (uint8[8])" },
+        "rule_dests":        { "$ref": "#/$defs/hex16", "description": "Rule destinations (uint8[8])" },
+        "sync":              { "$ref": "#/$defs/hex16", "description": "Sync state (uint8[8])" },
+        "rule_dest_targets": { "$ref": "#/$defs/hex16", "description": "Rule dest targets (uint8[8])" },
+        "smin":              { "$ref": "#/$defs/hex16", "description": "Sync min (uint8[8])" },
+        "smax":              { "$ref": "#/$defs/hex16", "description": "Sync max (uint8[8])" },
+        "scale":             { "type": "integer", "minimum": 0 },
+        "glyph":             { "$ref": "#/$defs/hex16", "description": "Display glyph (uint8[8])" }
+      }
+    },
+
+    "es_event": {
+      "type": "object",
+      "required": ["on", "index", "interval"],
+      "additionalProperties": false,
+      "properties": {
+        "on":       { "type": "integer", "minimum": 0 },
+        "index":    { "type": "integer", "minimum": 0 },
+        "interval": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "es_pattern": {
+      "type": "object",
+      "required": ["events", "interval_ind", "length", "loop", "root_x", "root_y", "edge", "edge_time", "voices", "dir", "linearize", "start", "end"],
+      "additionalProperties": false,
+      "properties": {
+        "events": {
+          "type": "array",
+          "description": "Up to 128 events (es_event_t[128])",
+          "minItems": 128,
+          "maxItems": 128,
+          "items": { "$ref": "#/$defs/es_event" }
+        },
+        "interval_ind": { "type": "integer", "minimum": 0 },
+        "length":       { "type": "integer", "minimum": 0 },
+        "loop":         { "type": "integer", "minimum": 0 },
+        "root_x":       { "type": "integer", "minimum": 0 },
+        "root_y":       { "type": "integer", "minimum": 0 },
+        "edge":         { "type": "integer", "minimum": 0 },
+        "edge_time":    { "type": "integer", "minimum": 0 },
+        "voices":       { "type": "integer", "minimum": 0 },
+        "dir":          { "type": "integer", "minimum": 0 },
+        "linearize":    { "type": "integer", "minimum": 0 },
+        "start":        { "type": "integer", "minimum": 0 },
+        "end":          { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "es_data": {
+      "type": "object",
+      "required": ["arp", "p_select", "voices", "octave", "scale", "keymap", "patterns", "glyph"],
+      "additionalProperties": false,
+      "properties": {
+        "arp":      { "type": "integer", "minimum": 0 },
+        "p_select": { "type": "integer", "minimum": 0 },
+        "voices":   { "type": "integer", "minimum": 0 },
+        "octave":   { "type": "integer", "minimum": 0 },
+        "scale":    { "type": "integer", "minimum": 0 },
+        "keymap": {
+          "type": "string",
+          "description": "Key-to-note mapping (uint8[256])",
+          "pattern": "^[0-9a-fA-F]{512}$"
+        },
+        "patterns": {
+          "type": "array",
+          "description": "16 patterns (es_pattern_t[16])",
+          "minItems": 16,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/es_pattern" }
+        },
+        "glyph": { "$ref": "#/$defs/hex16", "description": "Display glyph (uint8[8])" }
+      }
+    },
+
+    "levels_data": {
+      "type": "object",
+      "required": ["pattern", "note", "mode", "all", "now", "start", "len", "dir", "scale", "octave", "offset", "range", "slew"],
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "array",
+          "description": "4 channels of 16 CV steps (uint16[4][16])",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "description": "32 hex chars = 16 uint16 values",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          }
+        },
+        "note": {
+          "type": "array",
+          "description": "4 channels of 16 note steps (uint8[4][16])",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": { "$ref": "#/$defs/hex32" }
+        },
+        "mode":   { "$ref": "#/$defs/hex8",  "description": "Mode per channel (bool[4])" },
+        "all":    { "$ref": "#/$defs/hex8",  "description": "All flag per channel (bool[4])" },
+        "now":    { "type": "integer", "minimum": 0 },
+        "start":  { "type": "integer", "minimum": 0 },
+        "len":    { "type": "integer" },
+        "dir":    { "type": "integer", "minimum": 0 },
+        "scale":  { "$ref": "#/$defs/hex8",  "description": "Scale per channel (uint8[4])" },
+        "octave": { "$ref": "#/$defs/hex8",  "description": "Octave per channel (uint8[4])" },
+        "offset": { "$ref": "#/$defs/hex16", "description": "CV offset per channel (uint16[4])" },
+        "range":  { "$ref": "#/$defs/hex16", "description": "CV range per channel (uint16[4])" },
+        "slew":   { "$ref": "#/$defs/hex16", "description": "CV slew per channel (uint16[4])" }
+      }
+    },
+
+    "cycles_data": {
+      "type": "object",
+      "required": ["pos", "speed", "mult", "range", "div", "mode", "shape", "friction", "force"],
+      "additionalProperties": false,
+      "properties": {
+        "pos":      { "$ref": "#/$defs/hex16", "description": "Position per channel (uint16[4])" },
+        "speed":    { "$ref": "#/$defs/hex16", "description": "Speed per channel (int16[4])" },
+        "mult":     { "$ref": "#/$defs/hex8",  "description": "Multiplier per channel (int8[4])" },
+        "range":    { "$ref": "#/$defs/hex8",  "description": "Range per channel (uint8[4])" },
+        "div":      { "$ref": "#/$defs/hex8",  "description": "Divisor per channel (uint8[4])" },
+        "mode":     { "type": "integer", "minimum": 0 },
+        "shape":    { "type": "integer", "minimum": 0 },
+        "friction": { "type": "integer", "minimum": 0 },
+        "force":    { "type": "integer", "minimum": 0 }
+      }
+    }
+
+  }
+}
