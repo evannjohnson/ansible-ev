@@ -494,11 +494,16 @@ static void ii_init_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state)
 		d[2] = 0;
 		d[3] = 0;
 		i2c_leader_tx(follower->addr, d, 4);
+
+		// restore sustain mode for other ii leaders
+		d[0] = WS_S_AR_MODE;
+		d[1] = 0;
+		i2c_leader_tx(follower->addr, d, 2);
 	}
 	else
 	{
 		d[0] = WS_S_AR_MODE;
-		d[1] = 0;
+		d[1] = 1;
 		i2c_leader_tx(follower->addr, d, 2);
 	}
 }
@@ -525,54 +530,32 @@ static void ii_tr_wsyn(i2c_follower_t* follower, uint8_t track, uint8_t state) {
 	// 	pitch = ET[outputs[track].semitones + follower->oct * 12] - 3277;
 	// }
 
-	if (state) {
-		uint16_t vel = aux_to_vel(aux_param[0][track]);
-		switch (follower->active_mode) {
-			case 0: { // polyphonically allocated
-				d[0] = WS_S_NOTE;
-				d[1] = pitch >> 8;
-				d[2] = pitch & 0xFF;
-				d[3] = vel >> 8;
-				d[4] = vel & 0xFF;
-				l = 5;
-				break;
-			}
-			case 1: { // tracks to first 4 voices
-				d[0] = WS_S_VOX;
-				d[1] = track + 1;
-				d[2] = pitch >> 8;
-				d[3] = pitch & 0xFF;
-				d[4] = vel >> 8;
-				d[5] = vel & 0xFF;
-				l = 6;
-				break;
-			}
-			default: {
-				return;
-			}
+	// wsyn is in AR mode, notes release on their own: ignore the trigger off edge
+	if (!state) return;
+
+	uint16_t vel = aux_to_vel(aux_param[0][track]);
+	switch (follower->active_mode) {
+		case 0: { // polyphonically allocated
+			d[0] = WS_S_NOTE;
+			d[1] = pitch >> 8;
+			d[2] = pitch & 0xFF;
+			d[3] = vel >> 8;
+			d[4] = vel & 0xFF;
+			l = 5;
+			break;
 		}
-	}
-	else {
-		switch (follower->active_mode) {
-			case 0: {
-				d[0] = WS_S_NOTE;
-				d[1] = pitch >> 8;
-				d[2] = pitch & 0xFF;
-				d[3] = 0;
-				d[4] = 0;
-				l = 5;
-				break;
-			}
-			case 1: {
-				d[0] = WS_S_VOX;
-				d[1] = track + 1;
-				d[2] = pitch >> 8;
-				d[3] = pitch & 0xFF;
-				d[4] = 0;
-				d[5] = 0;
-				l = 6;
-				break;
-			}
+		case 1: { // tracks to first 4 voices
+			d[0] = WS_S_VOX;
+			d[1] = track + 1;
+			d[2] = pitch >> 8;
+			d[3] = pitch & 0xFF;
+			d[4] = vel >> 8;
+			d[5] = vel & 0xFF;
+			l = 6;
+			break;
+		}
+		default: {
+			return;
 		}
 	}
 	if (l > 0) {
