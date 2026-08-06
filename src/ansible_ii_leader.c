@@ -6,8 +6,8 @@
 #include "music.h"
 
 static uint16_t aux_to_vel(uint16_t aux) {
-	// map from 1-320 range of duration param to V 2 - V 5 for velocity control
-	return aux * 41 + 3264;
+	// map from 1-320 range of duration param to V 0.5 - V 5 for velocity control
+	return aux * 23 + 816;
 }
 
 static void ii_init_jf(i2c_follower_t* follower, uint8_t track, uint8_t state) {
