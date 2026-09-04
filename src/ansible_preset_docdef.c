@@ -205,6 +205,16 @@ json_docdef_t ansible_shared_docdefs[] = {
 		})
 	},
 	{
+		.name = "scale_downs",
+		.read = json_read_buffer,
+		.write = json_write_buffer,
+		.state = &ansible_json_read_buffer_state,
+		.params = &((json_read_buffer_params_t) {
+			.dst_size = sizeof_field(nvram_data_t, scale_downs),
+			.dst_offset = offsetof(nvram_data_t, scale_downs),
+		}),
+	},
+	{
 		.name = "tuning_table",
 		.read = json_read_array,
 		.write = json_write_array,

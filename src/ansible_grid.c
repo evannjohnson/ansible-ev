@@ -75,8 +75,9 @@ bool meta_reset_all;
 bool dur_tie_mode;
 
 uint8_t scale_data[16][8];
+uint8_t scale_downs_data[16];
 
-u8 cur_scale[8];
+s8 cur_scale[8];
 int8_t scale_adj[8];
 void calc_scale(uint8_t s);
 
@@ -389,6 +390,7 @@ void grid_keytimer(void) {
 						flashc_memcpy((void *)&f.mp_state.m[preset], &m, sizeof(m), true);
 
 						flashc_memcpy((void *)&f.scale, &scale_data, sizeof(scale_data), true);
+						flashc_memcpy((void *)&f.scale_downs, &scale_downs_data, sizeof(scale_downs_data), true);
 
 						preset_mode_exit();
 						grid_refresh = &refresh_mp;
@@ -404,6 +406,7 @@ void grid_keytimer(void) {
 						flashc_memcpy((void *)&f.kria_state.k[preset], &k, sizeof(k), true);
 
 						flashc_memcpy((void *)&f.scale, &scale_data, sizeof(scale_data), true);
+						flashc_memcpy((void *)&f.scale_downs, &scale_downs_data, sizeof(scale_downs_data), true);
 
 						preset_mode_exit();
 						grid_refresh = &refresh_kria;
@@ -413,6 +416,7 @@ void grid_keytimer(void) {
 						flashc_memset8((void*)&(f.es_state.preset), preset, 1, true);
 						flashc_memcpy((void *)&f.es_state.e[preset], &e, sizeof(e), true);
 						flashc_memcpy((void *)&f.scale, &scale_data, sizeof(scale_data), true);
+						flashc_memcpy((void *)&f.scale_downs, &scale_downs_data, sizeof(scale_downs_data), true);
 
 						preset_mode_exit();
 						grid_refresh = &refresh_es;
@@ -981,12 +985,13 @@ void clock_kria_note(kria_track* track, uint8_t trackNum) {
 static void kria_set_note(uint8_t trackNum) {
 	u8 noteInScale = (note[trackNum] + alt_note[trackNum]) % 7; // combine both note params
 	u8 octaveBump = (note[trackNum] + alt_note[trackNum]) / 7; // if it wrapped around the octave, bump it
-	set_cv_note(
-		trackNum,
+	int semitones =
 		(int)cur_scale[noteInScale] +
 		scale_adj[noteInScale] +
-		(int)((oct[trackNum]+octaveBump) * 12),
-		0);
+		(int)((oct[trackNum]+octaveBump) * 12);
+	if (semitones < 0) semitones = 0;
+	else if (semitones > 119) semitones = 119;
+	set_cv_note(trackNum, semitones, 0);
 }
 
 void clock_kria_track( uint8_t trackNum ) {
@@ -2714,7 +2719,10 @@ void handler_KriaGridKey(s32 data) {
 						}
 					}
 					else if(x < 8) {
-						if(y > 4) {
+						if(y == 4) {
+							scale_downs_data[k.p[edit_pattern].scale] = 7 - x;
+						}
+						else if(y > 4) {
 							k.p[edit_pattern].scale = (y - 5) * 8 + x;
 							for (uint8_t i = 0; i < 8; i++) {
 								scale_adj[i] = 0;
@@ -3477,6 +3485,9 @@ void refresh_kria_scale(kria_view_t* view)
 	// vertical bar dividing the left and right half
 	for(uint8_t i=0;i<7;i++)
 		monomeLedBuffer[8+16*i] = L0;
+	// root note down-shift, rightmost = no shift
+	monomeLedBuffer[R4 + 7 - (scale_downs_data[k.p[edit_pattern].scale] & 7)] = L1;
+
 	// the two rows of scale selecting buttons
 	for(uint8_t i=0;i<8;i++) {
 		monomeLedBuffer[R5 + i] = 2;
@@ -3671,6 +3682,7 @@ void default_mp() {
 		for(i2=0;i2<7;i2++)
 			flashc_memset8((void*)&(f.scale[i1][i2+1]), 1, 1, true);
 	}
+	flashc_memset8((void*)&f.scale_downs, 0, sizeof(f.scale_downs), true);
 }
 
 void init_mp() {
@@ -3709,6 +3721,7 @@ void init_mp() {
 	m.scale = f.mp_state.m[preset].scale;
 
 	memcpy(scale_data, f.scale, sizeof(scale_data));
+	memcpy(scale_downs_data, f.scale_downs, sizeof(scale_downs_data));
 
 	calc_scale(m.scale);
 
@@ -3930,6 +3943,13 @@ uint8_t get_note_slot(uint8_t v) {
 	return w;
 }
 
+static void mp_set_cv_note(uint8_t out, uint8_t n) {
+	int semitones = (int)cur_scale[7-n] + scale_adj[7-n];
+	if (semitones < 0) semitones = 0;
+	else if (semitones > 119) semitones = 119;
+	set_cv_note(out, semitones, 0);
+}
+
 void mp_note_on(uint8_t n) {
 	uint8_t w;
 	// print_dbg("\r\nmp note on: ");
@@ -3945,7 +3965,7 @@ void mp_note_on(uint8_t n) {
 		if(mp_clock_count < 1) {
 			mp_clock_count++;
 			note_now[0] = n;
-			set_cv_note(0, (int)cur_scale[7-n] + scale_adj[7-n], 0);
+			mp_set_cv_note(0, n);
 			set_tr(TR1);
 		}
 		break;
@@ -3954,7 +3974,7 @@ void mp_note_on(uint8_t n) {
 			mp_clock_count++;
 			w = get_note_slot(2);
 			note_now[w] = n;
-			set_cv_note(w, (int)cur_scale[7-n] + scale_adj[7-n], 0);
+			mp_set_cv_note(w, n);
 			set_tr(TR1 + w);
 		}
 		break;
@@ -3963,7 +3983,7 @@ void mp_note_on(uint8_t n) {
 			mp_clock_count++;
 			w = get_note_slot(4);
 			note_now[w] = n;
-			set_cv_note(w, (int)cur_scale[7-n] + scale_adj[7-n], 0);
+			mp_set_cv_note(w, n);
 			set_tr(TR1 + w);
 		}
 		break;
@@ -4223,7 +4243,7 @@ void handler_MPGridKey(s32 data) {
 	}
 	else if(view_config) {
 		if(z) {
-			if(y < 6 && x < 8) {
+			if(y < 5 && x < 8) {
 				switch(x) {
 				case 0:
 				case 1:
@@ -4255,7 +4275,10 @@ void handler_MPGridKey(s32 data) {
 			}
 			else if(voice_mode != MP_8T) {
 				if(x < 8) {
-					m.scale = (y - 6) * 8 + x;
+					if(y == 5)
+						scale_downs_data[m.scale] = 7 - x;
+					else
+						m.scale = (y - 6) * 8 + x;
 				}
 				else {
 					scale_data[m.scale][7-y] = x-8;
@@ -4584,6 +4607,7 @@ void refresh_mp_config(void) {
 
 	// scale
 	if(voice_mode != MP_8T) {
+		monomeLedBuffer[R5 + 7 - (scale_downs_data[m.scale] & 7)] = L1;
 		for(i1=0;i1<8;i1++) {
 			monomeLedBuffer[8+16*i1] = L0;
 			monomeLedBuffer[R6 + i1] = 2;
@@ -4689,7 +4713,7 @@ void refresh_mp(void) {
 
 
 void calc_scale(uint8_t s) {
-	cur_scale[0] = scale_data[s][0];
+	cur_scale[0] = (s8)scale_data[s][0] - (s8)scale_downs_data[s];
 
 	for(u8 i1=1;i1<8;i1++) {
 		cur_scale[i1] = cur_scale[i1-1] + scale_data[s][i1];
@@ -5154,6 +5178,7 @@ void init_es(void) {
     es_view = es_main;
 
 	memcpy(scale_data, f.scale, sizeof(scale_data));
+	memcpy(scale_downs_data, f.scale_downs, sizeof(scale_downs_data));
 	if (e.scale < 16) calc_scale(e.scale);
 }
 

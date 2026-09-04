@@ -373,6 +373,7 @@ typedef const struct {
 	midi_arp_state_t midi_arp_state;
 	tt_state_t tt_state;
 	uint8_t scale[16][8];
+	uint8_t scale_downs[16];
 	uint16_t tuning_table[4][120];
 } nvram_data_t;
 '''
@@ -406,6 +407,7 @@ typedef const struct {
     def shared(self, nvram):
         return self.combine(
             self.array_2d_settings(nvram, ['scale:scales']),
+            self.array_1d_settings(nvram, ['scale_downs']),
             self.array_2d_settings(nvram, ['tuning_table'])
         )
 
