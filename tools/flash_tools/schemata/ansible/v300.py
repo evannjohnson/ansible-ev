@@ -2,6 +2,20 @@ from schemata.ansible.v161 import PresetSchema_v161
 
 
 class PresetSchema_v300(PresetSchema_v161):
+    def vanilla_params_settings(self, state, names):
+        # per-param kria arrays: the first 7 (vanilla) params keep the original
+        # key, the alt oct lane's slot is emitted as its own alt_oct_* scalar
+        return self.combine(
+            self.lambda_settings(state, [
+                (name, lambda x: self.encode_bytes(self.ffi.buffer(x)[0:7]))
+                for name in names
+            ]),
+            self.lambda_settings(state, [
+                ('{0}:alt_oct_{0}'.format(name), lambda x: x[7])
+                for name in names
+            ]),
+        )
+
     def app_list(self):
         return [
             'kria',
@@ -55,7 +69,7 @@ typedef enum {
 #define GRID_PRESETS 8
 
 #define KRIA_NUM_TRACKS 4
-#define KRIA_NUM_PARAMS 7
+#define KRIA_NUM_PARAMS 8
 #define KRIA_NUM_PATTERNS 16
 
 #define ES_EVENTS_PER_PATTERN 128
@@ -73,6 +87,7 @@ typedef struct {
 	u8 rptBits[16];
 	u8 alt_note[16];
 	u8 glide[16];
+	s8 alt_oct[16];
 
 	u8 p[KRIA_NUM_PARAMS][16];
 
@@ -85,6 +100,7 @@ typedef struct {
 	kria_direction direction;  
 	u8 advancing[KRIA_NUM_PARAMS];
 	u8 octshift;
+	u8 alt_octshift;
 
 	u8 lstart[KRIA_NUM_PARAMS];
 	u8 lend[KRIA_NUM_PARAMS];
@@ -446,21 +462,31 @@ typedef const struct {
                                                     'rptBits',
                                                     'alt_note',
                                                     'glide',
+                                                    'alt_oct',
                                                 ]),
-                                                self.array_2d_settings(track, [
-                                                    'p'
+                                                # the vanilla-sized keys hold the
+                                                # first 7 params; the alt oct lane
+                                                # gets its own keys for JSON compat
+                                                self.lambda_settings(track, [
+                                                    ('p', lambda x: [
+                                                        self.encode_buffer(x[i])
+                                                        for i in range(7)
+                                                    ]),
+                                                    ('p:p_alt_oct',
+                                                     lambda x: self.encode_buffer(x[7])),
                                                 ]),
                                                 self.scalar_settings(track, [
                                                     'dur_mul',
                                                     'direction',
                                                 ]),
-                                                self.array_1d_settings(track, [
+                                                self.vanilla_params_settings(track, [
                                                     'advancing',
                                                 ]),
                                                 self.scalar_settings(track, [
                                                     'octshift',
+                                                    'alt_octshift',
                                                 ]),
-                                                self.array_1d_settings(track, [
+                                                self.vanilla_params_settings(track, [
                                                     'lstart',
                                                     'lend',
                                                     'llen',
@@ -470,8 +496,8 @@ typedef const struct {
                                                 ]),
                                                 self.scalar_settings(track, [
                                                     'tt_clocked',
-                                                    'trigger_clocked'
-                                                    'stream_notes'
+                                                    'trigger_clocked',
+                                                    'stream_notes',
                                                 ]),
                                             ),
                                         ),

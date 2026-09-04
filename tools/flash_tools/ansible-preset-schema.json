@@ -332,7 +332,18 @@
         "tmul_coord":      { "$ref": "#/$defs/hex14", "description": "Clock div page LED coordinate per param, packed nibbles (uint8[7])" },
         "tt_clocked":      { "type": "boolean" },
         "trigger_clocked": { "type": "boolean" },
-        "stream_notes":    { "type": "boolean" }
+        "stream_notes":    { "type": "boolean" },
+
+        "alt_oct":            { "$ref": "#/$defs/hex32", "description": "Alternate octave per step (int8[16]); absent in vanilla presets" },
+        "alt_octshift":       { "type": "integer", "description": "Alternate octave shift; absent in vanilla presets" },
+        "alt_oct_lstart":     { "type": "integer", "description": "Loop start for the alt octave param; absent in vanilla presets" },
+        "alt_oct_lend":       { "type": "integer", "description": "Loop end for the alt octave param; absent in vanilla presets" },
+        "alt_oct_llen":       { "type": "integer", "description": "Loop length for the alt octave param; absent in vanilla presets" },
+        "alt_oct_lswap":      { "type": "integer", "description": "Loop swap for the alt octave param; absent in vanilla presets" },
+        "alt_oct_tmul":       { "type": "integer", "description": "Time multiplier for the alt octave param; absent in vanilla presets" },
+        "alt_oct_tmul_coord": { "type": "integer", "description": "Clock div page LED coordinate for the alt octave param, packed nibbles; absent in vanilla presets" },
+        "alt_oct_advancing":  { "type": "integer", "description": "Advancing flag for the alt octave param; absent in vanilla presets" },
+        "p_alt_oct":          { "$ref": "#/$defs/hex32", "description": "Probability lane for the alt octave param (uint8[16]); absent in vanilla presets" }
       }
     },
 

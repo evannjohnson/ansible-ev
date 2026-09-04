@@ -12,7 +12,10 @@
 #define GRID_PRESETS 8
 
 #define KRIA_NUM_TRACKS 4
-#define KRIA_NUM_PARAMS 7
+#define KRIA_NUM_PARAMS 8
+// how many params vanilla ansible has; the JSON backup keeps the vanilla
+// keys at this size for compatibility, with separate keys for later params
+#define KRIA_VANILLA_NUM_PARAMS 7
 #define KRIA_NUM_PATTERNS 16
 
 typedef enum {
@@ -37,6 +40,7 @@ typedef struct {
 	u8 rptBits[16];
 	u8 alt_note[16];
 	u8 glide[16];
+	s8 alt_oct[16];
 
 	u8 p[KRIA_NUM_PARAMS][16];
 
@@ -49,6 +53,7 @@ typedef struct {
 	kria_direction direction;
 	u8 advancing[KRIA_NUM_PARAMS];
 	u8 octshift;
+	u8 alt_octshift;
 
 	u8 lstart[KRIA_NUM_PARAMS];
 	u8 lend[KRIA_NUM_PARAMS];
@@ -104,7 +109,7 @@ typedef struct {
 } kria_state_t;
 
 typedef enum {
-	mTr, mNote, mOct, mDur, mRpt, mAltNote, mGlide, mScale, mPattern
+	mTr, mNote, mOct, mDur, mRpt, mAltNote, mGlide, mAltOct, mScale, mPattern
 } kria_modes_t;
 
 typedef enum {

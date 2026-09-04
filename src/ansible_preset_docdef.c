@@ -37,7 +37,30 @@ json_read_buffer_state_t ansible_json_read_buffer_state;
 json_read_object_state_t ansible_app_object_state[4];
 json_read_array_state_t ansible_json_read_array_state[4];
 
-DECLARE_STATIC_ALLOC(kria_data_t, k)
+// like DECLARE_STATIC_ALLOC, but seeds the fields absent from vanilla
+// ansible's JSON with their defaults so older presets load cleanly
+static void* static_alloc_kria_data_t(size_t size) {
+	if (size != sizeof(kria_data_t)) {
+		print_dbg("\r\nalloc FAILED");
+		return NULL;
+	}
+	for (uint8_t p = 0; p < KRIA_NUM_PATTERNS; p++) {
+		for (uint8_t t = 0; t < KRIA_NUM_TRACKS; t++) {
+			kria_track* track = &k.p[p].t[t];
+			memset(track->alt_oct, 0, sizeof(track->alt_oct));
+			track->alt_octshift = 0;
+			track->lstart[mAltOct] = 0;
+			track->lend[mAltOct] = 5;
+			track->llen[mAltOct] = 6;
+			track->lswap[mAltOct] = 0;
+			track->tmul[mAltOct] = 0;
+			track->tmul_coord[mAltOct] = 0;
+			track->advancing[mAltOct] = 1;
+			memset(track->p[mAltOct], 3, sizeof(track->p[mAltOct]));
+		}
+	}
+	return &k;
+}
 DECLARE_STATIC_ALLOC(mp_data_t, m)
 DECLARE_STATIC_ALLOC(es_data_t, e)
 DECLARE_STATIC_ALLOC(cycles_data_t, l)
@@ -402,7 +425,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																	.write = json_write_object,
 																	.state = &ansible_app_object_state[3],
 																	.params = &((json_read_object_params_t) {
-																		.docdef_ct = 21,
+																		.docdef_ct = 31,
 																		.docdefs = ((json_docdef_t[]) {
 																			{
 																				.name = "tr",
@@ -490,7 +513,8 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_array,
 																				.state = &ansible_json_read_array_state[3],
 																				.params = &((json_read_array_params_t) {
-																					.array_len = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].p) / sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].p[0]),
+																					// vanilla param count for JSON compatibility; the alt oct lane is "p_alt_oct"
+																					.array_len = KRIA_VANILLA_NUM_PARAMS,
 																					.item_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].p[0]),
 																					.item_docdef = &((json_docdef_t) {
 																						.read = json_read_buffer,
@@ -527,7 +551,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].advancing),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].advancing),
 																				}),
 																			},
@@ -547,7 +571,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].lstart),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].lstart),
 																				}),
 																			},
@@ -557,7 +581,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].lend),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].lend),
 																				}),
 																			},
@@ -567,7 +591,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].llen),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].llen),
 																				}),
 																			},
@@ -577,7 +601,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].lswap),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].lswap),
 																				}),
 																			},
@@ -587,7 +611,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].tmul),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].tmul),
 																				}),
 																			},
@@ -597,7 +621,7 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.write = json_write_buffer,
 																				.state = &ansible_json_read_buffer_state,
 																				.params = &((json_read_buffer_params_t) {
-																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].tmul_coord),
+																					.dst_size = KRIA_VANILLA_NUM_PARAMS,
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].tmul_coord),
 																				}),
 																			},
@@ -626,6 +650,98 @@ json_docdef_t ansible_app_docdefs[] = {
 																				.params = &((json_read_scalar_params_t) {
 																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].stream_notes),
 																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].stream_notes),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct",
+																				.read = json_read_buffer,
+																				.write = json_write_buffer,
+																				.state = &ansible_json_read_buffer_state,
+																				.params = &((json_read_buffer_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].alt_oct),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].alt_oct),
+																				}),
+																			},
+																			{
+																				.name = "alt_octshift",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].alt_octshift),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].alt_octshift),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_lstart",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].lstart[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].lstart[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_lend",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].lend[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].lend[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_llen",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].llen[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].llen[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_lswap",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].lswap[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].lswap[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_tmul",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].tmul[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].tmul[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_tmul_coord",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].tmul_coord[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].tmul_coord[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "alt_oct_advancing",
+																				.read = json_read_scalar,
+																				.write = json_write_number,
+																				.params = &((json_read_scalar_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].advancing[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].advancing[mAltOct]),
+																				}),
+																			},
+																			{
+																				.name = "p_alt_oct",
+																				.read = json_read_buffer,
+																				.write = json_write_buffer,
+																				.state = &ansible_json_read_buffer_state,
+																				.params = &((json_read_buffer_params_t) {
+																					.dst_size = sizeof_field(nvram_data_t, kria_state.k[0].p[0].t[0].p[mAltOct]),
+																					.dst_offset = offsetof(nvram_data_t, kria_state.k[0].p[0].t[0].p[mAltOct]),
 																				}),
 																			},
 																		}),
